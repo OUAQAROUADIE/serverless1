@@ -1,0 +1,120 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-esj-accueil-service
+  namespace: e-esj
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: e-esj-accueil-service
+  template:
+    metadata:
+      labels:
+        app: e-esj-accueil-service
+    spec:
+      containers:
+        - name: e-esj-accueil-service
+          image: ouaqar/e-esj-accueil:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: POSTGRES_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-esj-accueil-service
+  namespace: e-esj
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: e-esj-accueil-service
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-service
+  namespace: e-esj
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-service
+  template:
+    metadata:
+      labels:
+        app: postgres-service
+    spec:
+      containers:
+        - name: postgres-service
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-config
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: e-esj
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: postgres-service
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+  namespace: e-esj
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

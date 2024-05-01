@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: e-esj
+data:
+  POSTGRES_DB: ZWVzamRi
+  POSTGRES_USER: cG9zdGdyZXM=
+  POSTGRES_PASSWORD: cm9vdA==
